@@ -1,7 +1,8 @@
 import openai
 from gtts import gTTS
 from telegram import Update
-from telegram.ext import Updater, MessageHandler, Filters, CallbackContext
+from telegram.ext import Application, MessageHandler, CommandHandler
+from telegram.ext.filters import TEXT
 import os
 
 # Configuração da OpenAI (substitua pela sua API Key)
@@ -33,7 +34,7 @@ def responder(update: Update, context: CallbackContext) -> None:
     update.message.reply_voice(voice=open(audio_path, "rb"))
 
 # Configuração do Telegram
-updater = Updater(TELEGRAM_BOT_TOKEN, use_context=True)
+app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 dispatcher = updater.dispatcher
 
 dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, responder))
