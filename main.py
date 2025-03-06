@@ -2,6 +2,7 @@ import openai
 from gtts import gTTS
 from telegram import Update
 from telegram.ext import Application, MessageHandler, CommandHandler
+from telegram.ext import CallbackContext
 from telegram.ext.filters import TEXT
 import os
 
