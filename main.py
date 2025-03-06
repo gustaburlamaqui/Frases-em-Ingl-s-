@@ -35,9 +35,13 @@ def responder(update: Update, context: CallbackContext) -> None:
     update.message.reply_voice(voice=open(audio_path, "rb"))
 
 # Configuração do Telegram
+from telegram.ext import Application, MessageHandler, filters
+
+# Criar a aplicação do Telegram
 app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
-dispatcher = updater.dispatcher
 
-dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, responder))
+# Adicionar o handler para processar mensagens
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, responder))
 
-updater.start_polling()
+# Iniciar o bot
+app.run_polling()
