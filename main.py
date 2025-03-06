@@ -1,47 +1,53 @@
+import os
 import openai
 from gtts import gTTS
 from telegram import Update
-from telegram.ext import Application, MessageHandler, CommandHandler
-from telegram.ext import CallbackContext
-from telegram.ext.filters import TEXT
-import os
+from telegram.ext import Application, MessageHandler, filters, CommandHandler
 
-# Configuração da OpenAI (substitua pela sua API Key)
+# Configuração da API OpenAI
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Token do Bot do Telegram (substitua pelo seu Token do BotFather)
+# Token do Bot do Telegram
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
-def responder(update: Update, context: CallbackContext) -> None:
+# Função para responder mensagens do usuário
+async def responder(update: Update, context):
     mensagem_usuario = update.message.text
 
     # Enviar a mensagem para o ChatGPT
     resposta = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[
-            {"role": "system", "content": "Você é um professor de inglês e responde apenas em inglês."},
-            {"role": "user", "content": mensagem_usuario}
+            {"role": "system", "content": "Você é um assistente útil."},
+            {"role": "user", "content": mensagem_usuario},
         ]
     )
 
     texto_resposta = resposta["choices"][0]["message"]["content"]
 
-    # Converter texto para áudio com gTTS
-    tts = gTTS(texto_resposta, lang="en")
+    # Converter texto para áudio
+    tts = gTTS(texto_resposta, lang="pt")
     audio_path = "resposta.mp3"
     tts.save(audio_path)
 
     # Enviar áudio no Telegram
-    update.message.reply_voice(voice=open(audio_path, "rb"))
+    await update.message.reply_voice(voice=open(audio_path, "rb"))
 
-# Configuração do Telegram
-from telegram.ext import Application, MessageHandler, filters
+# Função para comando de start
+async def start(update: Update, context):
+    await update.message.reply_text("Olá! Envie uma mensagem e eu responderei com áudio!")
 
-# Criar a aplicação do Telegram
-app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+# Configuração do Bot no Telegram
+def main():
+    app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
-# Adicionar o handler para processar mensagens
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, responder))
+    # Adicionar handlers
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, responder))
 
-# Iniciar o bot
-app.run_polling()
+    # Iniciar o bot
+    app.run_polling()
+
+# Iniciar a aplicação
+if __name__ == "__main__":
+    main()
