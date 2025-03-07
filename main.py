@@ -1,53 +1,41 @@
 import os
 import openai
-from gtts import gTTS
+import logging
 from telegram import Update
-from telegram.ext import Application, MessageHandler, filters, CommandHandler
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 
-# Configuração da API OpenAI
+# Configuração do OpenAI
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Token do Bot do Telegram
+# Configuração do Telegram
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
-# Função para responder mensagens do usuário
-async def responder(update: Update, context):
+# Configuração de logs
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+
+# Função de resposta do bot
+async def responder(update: Update, context: CallbackContext) -> None:
     mensagem_usuario = update.message.text
 
-    # Enviar a mensagem para o ChatGPT
-    resposta = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "Você é um assistente útil."},
-            {"role": "user", "content": mensagem_usuario},
-        ]
-    )
+    try:
+        # Envia a mensagem para a OpenAI
+        resposta = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "Você é um assistente de IA útil."},
+                {"role": "user", "content": mensagem_usuario}
+            ]
+        )
 
-    texto_resposta = resposta["choices"][0]["message"]["content"]
+        texto_resposta = resposta["choices"][0]["message"]["content"]
+        await update.message.reply_text(texto_resposta)
 
-    # Converter texto para áudio
-    tts = gTTS(texto_resposta, lang="pt")
-    audio_path = "resposta.mp3"
-    tts.save(audio_path)
+    except Exception as e:
+        logging.error(f"Erro ao processar mensagem: {e}")
+        await update.message.reply_text("Ocorreu um erro ao processar sua solicitação.")
 
-    # Enviar áudio no Telegram
-    await update.message.reply_voice(voice=open(audio_path, "rb"))
-
-# Função para comando de start
-async def start(update: Update, context):
-    await update.message.reply_text("Olá! Envie uma mensagem e eu responderei com áudio!")
-
-# Configuração do Bot no Telegram
-def main():
-    app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
-
-    # Adicionar handlers
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, responder))
-
-    # Iniciar o bot
-    app.run_polling()
-
-# Iniciar a aplicação
-if __name__ == "__main__":
-    main()
+# Inicializar o bot
+def
